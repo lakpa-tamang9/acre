@@ -17,7 +17,7 @@ parser.add_argument("--model_path", type= str, help = "Path to the trained model
 parser.add_argument("--labels_path", type=str, help="Path to the labels file (.txt)")
 parser.add_argument("--video_path", type=str, help="Path to your video file for inference.")
 parser.add_argument("--write_output", default=False, type = bool, help = "Set to true if you want to save the predicted actions in a video file.")
-parser.add_argument("--output-path", default =None, type=str, help="Path to your output directory, where you want to save the predicted video.")
+parser.add_argument("--output_path", default =None, type=str, help="Path to your output directory, where you want to save the predicted video.")
 args = parser.parse_args()
 
 with open("./labels.txt") as f:
