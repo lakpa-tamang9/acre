@@ -1,3 +1,5 @@
+import argparse
+import time
 from collections import deque
 
 import cv2
@@ -7,30 +9,27 @@ import numpy as np
 from data_proc import ExtractFeatures
 from models import Inference
 from utils.draw_utils import DrawUtils
-import time
 
 mp_solution = mp.solutions
-model_path = "./saved_models/trained_classifier_allclass_wins40.pickle"
-action_labels = [
-    "crafty_tricks",
-    "sowing_corn_and_driving_pigeons",
-    "waves_crashing",
-    "flower_clock",
-    "wind_that_shakes_trees",
-    "big_wind",
-    "bokbulbok",
-    "seaweed_in_the_swell_sea",
-    "chulong_chulong_phaldo",
-    "chalseok_chalseok_phaldo",
-]
+parser = argparse.ArgumentParser()
 
-infer = Inference(model_path, action_labels)
+parser.add_argument("--model_path", type= str, help = "Path to the trained model (.pickle)")
+parser.add_argument("--labels_path", type=str, help="Path to the labels file (.txt)")
+parser.add_argument("--video_path", type=str, help="Path to your video file for inference.")
+parser.add_argument("--write_output", default=False, type = bool, help = "Set to true if you want to save the predicted actions in a video file.")
+parser.add_argument("--output-path", default =None, type=str, help="Path to your output directory, where you want to save the predicted video.")
+args = parser.parse_args()
+
+with open("./labels.txt") as f:
+    action_labels = [label.strip() for label in f.read().split("\n")]
+
+infer = Inference(args.model_path, action_labels)
 extract = ExtractFeatures()
 drawutils = DrawUtils()
 
 
 def prediction(path):
-    cap = cv2.VideoCapture(path)
+    cap = cv2.VideoCapture(0 if path == "0" else path)
 
     with mp_solution.pose.Pose(
         min_detection_confidence=0.5, min_tracking_confidence=0.5
@@ -41,7 +40,7 @@ def prediction(path):
 
         size = (frame_width, frame_height)
         result = cv2.VideoWriter(
-            "predicted_video_02.avi", cv2.VideoWriter_fourcc(*"MJPG"), 30, size
+            "{}/acre_output.avi".format(args.output_path), cv2.VideoWriter_fourcc(*"MJPG"), 30, size
         )
         t1 = 0
         t2 = 0
@@ -110,14 +109,12 @@ def prediction(path):
                     (255, 0, 0),
                     1,
                 )
-                result.write(image)
+                if args.write_output:
+                    result.write(image)
                 cv2.imshow("Action recognition system", image)
                 if cv2.waitKey(5) & 0xFF == "q":
                     break
     cap.release()
 
-
-# path = "/media/lakpa/Storage/youngdusan_data/youngdusan_video_data/bokbulbok/bokbulbok_5.mov"
-# path = "/media/lakpa/Storage/youngdusan_data/youngdusan_video_data/big_wind/big_wind_10.mov"
-path = "/media/lakpa/Storage/youngdusan_data/test_video/videoplayback.mp4"
-prediction(path)
+if __name__=="__main__":
+    prediction(args.video_path)
